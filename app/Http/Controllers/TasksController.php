@@ -16,12 +16,19 @@ class TasksController extends Controller
      */
     public function index()
     {
-        $tasks = Task::all();
+        $data = [];
+        if (\Auth::check()) {
+            $user = \Auth::user();
+            $tasks = $user->tasks()->orderBy('created_at', 'desc')->paginate(10);
 
-        return view('welcome', [
-            'tasks' => $tasks,
-    ] );
-        
+            $data = [
+                'user' => $user,
+                'tasks' => $tasks,
+            ];
+            return view('tasks.tasks', $data);
+        }else {
+            return view('welcome');
+        }
     }
 
     /**
@@ -79,15 +86,22 @@ class TasksController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+   public function edit($id)
     {
-        $task = Task::find($id);
+    if (\Auth::check()) {      
+    $user = \Auth::user();  
 
-        return view('tasks.edit', [
+    $task = Task::find($id);
+
+    return view('tasks.edit', [
             'task' => $task,
         ]);
-    }
+    }else {
+            return view('welcome');
+        }
 
+    }
+    
     /**
      * Update the specified resource in storage.
      *
@@ -118,8 +132,12 @@ class TasksController extends Controller
     public function destroy($id)
     {
         $task = Task::find($id);
-        $task->delete();
+        if (\Auth::id() === $task->user_id) {
+            $task->delete();
+        }
 
         return redirect('/');
     }
+    
+    
 }
